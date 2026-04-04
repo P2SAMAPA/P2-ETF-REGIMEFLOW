@@ -395,7 +395,7 @@ def display_signal_history(hist_df):
         return ''
     
     # Apply styling
-    styled_df = display_df.style.applymap(
+    styled_df = display_df.style.map(
         color_results, subset=['FI Result', 'EQ Result']
     )
     
@@ -441,8 +441,7 @@ if data is None:
 
 # Sidebar with information
 with st.sidebar:
-    st.image("https://via.placeholder.com/300x100?text=RegimeFlow", use_column_width=True)
-    st.markdown("## About")
+    st.markdown("## About RegimeFlow")
     st.markdown("""
     **RegimeFlow** is a systematic ETF allocation engine that selects the highest 
     expected-return ETF conditional on the current macro regime.
@@ -453,10 +452,15 @@ with st.sidebar:
     - 📈 Cross-sectional ETF scoring
     - 🛡️ Risk management with stop-loss
     
-    ### Data Sources
-    - Fixed Income & Commodity ETFs
-    - Equity Sector ETFs
-    - Macro indicators (VIX, DXY, Yield Curve, etc.)
+    ### ETF Universes
+    **Fixed Income/Commodities:**
+    TLT, LQD, HYG, VNQ, GLD, SLV
+    
+    **Equity:**
+    QQQ, XLK, XLF, XLE, XLV, XLI, XLY, XLP, XLU, GDX, XME, IWM
+    
+    **Benchmarks:**
+    AGG (Fixed Income), SPY (Equity)
     """)
     
     st.markdown("---")
@@ -500,6 +504,11 @@ st.markdown("---")
 st.markdown("## 📈 ETF Rankings")
 st.markdown("Scores based on conditional expected returns × probability of positive return")
 
+# Color function for scores
+def color_score(val):
+    color = '#10b981' if val > 0 else '#ef4444'
+    return f'color: {color}'
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -507,13 +516,8 @@ with col1:
     df_fi = pd.DataFrame.from_dict(data["FI"]["scores"], orient="index", columns=["Score"])
     df_fi = df_fi.sort_values("Score", ascending=False)
     
-    # Add color coding to scores
-    def color_score(val):
-        color = '#10b981' if val > 0 else '#ef4444'
-        return f'color: {color}'
-    
     st.dataframe(
-        df_fi.style.applymap(color_score, subset=['Score']).format({'Score': '{:.4f}'}),
+        df_fi.style.map(color_score, subset=['Score']).format({'Score': '{:.4f}'}),
         use_container_width=True,
         height=400
     )
@@ -523,7 +527,7 @@ with col2:
     df_eq = pd.DataFrame.from_dict(data["EQ"]["scores"], orient="index", columns=["Score"])
     df_eq = df_eq.sort_values("Score", ascending=False)
     st.dataframe(
-        df_eq.style.applymap(color_score, subset=['Score']).format({'Score': '{:.4f}'}),
+        df_eq.style.map(color_score, subset=['Score']).format({'Score': '{:.4f}'}),
         use_container_width=True,
         height=400
     )
