@@ -1,31 +1,19 @@
 import numpy as np
-from config import TX_COST, TSL_THRESHOLD, TSL_WINDOW
 
-class Portfolio:
-    def __init__(self):
-        self.current = None
-        self.returns = []
-        self.in_cash = False
+def run_backtest(df, etfs, dist):
+    equity = [1.0]
 
-    def update(self, r):
-        self.returns.append(r)
+    for i in range(100, len(df)-1):
+        regime = df.iloc[i]["regime"]
 
-    def tsl_trigger(self):
-        if len(self.returns) < TSL_WINDOW:
-            return False
-        return sum(self.returns[-TSL_WINDOW:]) < TSL_THRESHOLD
+        scores = {}
+        for etf in etfs:
+            vals = dist[regime][etf]
+            scores[etf] = np.mean(vals)
 
-    def decide(self, scores):
-        best = max(scores, key=scores.get)
+        pick = max(scores, key=scores.get)
+        ret = df.iloc[i+1][pick]
 
-        if self.tsl_trigger():
-            self.in_cash = True
-            return "CASH", 0
+        equity.append(equity[-1]*(1+ret))
 
-        if self.current and self.current != best:
-            scores[best] -= TX_COST
-
-        self.current = best
-        self.in_cash = False
-
-        return best, scores[best]
+    return equity[-250:]
