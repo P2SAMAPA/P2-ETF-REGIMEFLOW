@@ -259,7 +259,7 @@ def plot_return_distributions(data):
     st.plotly_chart(fig2, use_container_width=True)
 
 # ─────────────────────────────────────────────
-# PLOT EQUITY CURVE
+# PLOT EQUITY CURVE (FIXED VERSION)
 # ─────────────────────────────────────────────
 def plot_equity_curve(data):
     """Create professional equity curve chart"""
@@ -270,95 +270,126 @@ def plot_equity_curve(data):
         st.info("📈 Equity curve data will appear here once backtesting is complete")
         return
     
-    # Create dataframe
-    df_curve = pd.DataFrame(equity_curve)
-    df_curve['date'] = pd.to_datetime(df_curve['date'])
-    df_curve.set_index('date', inplace=True)
-    
-    # Calculate cumulative returns
-    if 'return' in df_curve.columns:
-        df_curve['cumulative_return'] = (1 + df_curve['return']).cumprod()
-    else:
-        # If only equity values provided
-        df_curve['cumulative_return'] = df_curve['equity'] / df_curve['equity'].iloc[0]
-    
-    # Create figure
-    fig = go.Figure()
-    
-    # Add main equity curve
-    fig.add_trace(go.Scatter(
-        x=df_curve.index,
-        y=df_curve['cumulative_return'],
-        mode='lines',
-        name='Strategy Return',
-        line=dict(color='#1e3c72', width=2.5),
-        fill='tozeroy',
-        fillcolor='rgba(30, 60, 114, 0.1)'
-    ))
-    
-    # Add moving average if enough data
-    if len(df_curve) > 20:
-        ma20 = df_curve['cumulative_return'].rolling(window=20).mean()
+    # Handle different possible data structures
+    try:
+        if isinstance(equity_curve, list):
+            # Check if it's a list of dictionaries or simple values
+            if len(equity_curve) > 0 and isinstance(equity_curve[0], dict):
+                # Has date and value
+                df_curve = pd.DataFrame(equity_curve)
+                if 'date' in df_curve.columns:
+                    df_curve['date'] = pd.to_datetime(df_curve['date'])
+                    df_curve.set_index('date', inplace=True)
+                    if 'equity' in df_curve.columns:
+                        df_curve['cumulative_return'] = df_curve['equity'] / df_curve['equity'].iloc[0]
+                    elif 'return' in df_curve.columns:
+                        df_curve['cumulative_return'] = (1 + df_curve['return']).cumprod()
+                    else:
+                        # Use first column as values
+                        first_col = df_curve.columns[0]
+                        df_curve['cumulative_return'] = df_curve[first_col] / df_curve[first_col].iloc[0]
+                else:
+                    # No date, just use index
+                    first_col = df_curve.columns[0] if len(df_curve.columns) > 0 else 'value'
+                    df_curve['cumulative_return'] = df_curve[first_col] / df_curve[first_col].iloc[0]
+                    df_curve.index = pd.date_range(end=datetime.now(), periods=len(equity_curve), freq='D')
+            else:
+                # Simple list of values
+                df_curve = pd.DataFrame({'equity': equity_curve})
+                df_curve['cumulative_return'] = df_curve['equity'] / df_curve['equity'].iloc[0]
+                # Create dummy dates
+                df_curve.index = pd.date_range(end=datetime.now(), periods=len(equity_curve), freq='D')
+        else:
+            st.info("📈 Equity curve data format not recognized")
+            return
+        
+        # Create figure
+        fig = go.Figure()
+        
+        # Add main equity curve
         fig.add_trace(go.Scatter(
             x=df_curve.index,
-            y=ma20,
+            y=df_curve['cumulative_return'],
             mode='lines',
-            name='20-Day MA',
-            line=dict(color='#f59e0b', width=1.5, dash='dash')
+            name='Strategy Return',
+            line=dict(color='#1e3c72', width=2.5),
+            fill='tozeroy',
+            fillcolor='rgba(30, 60, 114, 0.1)'
         ))
-    
-    # Calculate and display key metrics
-    total_return = (df_curve['cumulative_return'].iloc[-1] - 1) * 100
-    
-    fig.update_layout(
-        title={
-            'text': f"Strategy Equity Curve<br><sub>Total Return: {total_return:.2f}%</sub>",
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 20, 'family': 'Arial Black'}
-        },
-        xaxis_title="Date",
-        yaxis_title="Cumulative Return (x)",
-        template="plotly_white",
-        height=500,
-        hovermode='x unified',
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
+        
+        # Add moving average if enough data
+        if len(df_curve) > 20:
+            ma20 = df_curve['cumulative_return'].rolling(window=20).mean()
+            fig.add_trace(go.Scatter(
+                x=df_curve.index,
+                y=ma20,
+                mode='lines',
+                name='20-Day MA',
+                line=dict(color='#f59e0b', width=1.5, dash='dash')
+            ))
+        
+        # Calculate and display key metrics
+        total_return = (df_curve['cumulative_return'].iloc[-1] - 1) * 100
+        
+        fig.update_layout(
+            title={
+                'text': f"Strategy Equity Curve<br><sub>Total Return: {total_return:.2f}%</sub>",
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 20, 'family': 'Arial Black'}
+            },
+            xaxis_title="Date",
+            yaxis_title="Cumulative Return (x)",
+            template="plotly_white",
+            height=500,
+            hovermode='x unified',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01
+            )
         )
-    )
-    
-    # Add horizontal line at y=1 (breakeven)
-    fig.add_hline(y=1, line_dash="dash", line_color="gray", opacity=0.5)
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Display performance metrics in columns
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Return", f"{total_return:.2f}%")
-    
-    with col2:
-        # Calculate max drawdown
-        rolling_max = df_curve['cumulative_return'].expanding().max()
-        drawdown = (df_curve['cumulative_return'] - rolling_max) / rolling_max * 100
-        max_dd = drawdown.min()
-        st.metric("Max Drawdown", f"{max_dd:.2f}%", delta_color="inverse")
-    
-    with col3:
-        # Calculate Sharpe ratio (assuming 0% risk-free rate)
-        if 'return' in df_curve.columns:
-            sharpe = df_curve['return'].mean() / df_curve['return'].std() * np.sqrt(252)
-            st.metric("Sharpe Ratio", f"{sharpe:.2f}")
-    
-    with col4:
-        # Calculate win rate
-        if 'return' in df_curve.columns:
-            win_rate = (df_curve['return'] > 0).mean() * 100
-            st.metric("Win Rate", f"{win_rate:.1f}%")
+        
+        # Add horizontal line at y=1 (breakeven)
+        fig.add_hline(y=1, line_dash="dash", line_color="gray", opacity=0.5)
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Display performance metrics in columns
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Return", f"{total_return:.2f}%")
+        
+        with col2:
+            # Calculate max drawdown
+            rolling_max = df_curve['cumulative_return'].expanding().max()
+            drawdown = (df_curve['cumulative_return'] - rolling_max) / rolling_max * 100
+            max_dd = drawdown.min()
+            st.metric("Max Drawdown", f"{max_dd:.2f}%", delta_color="inverse")
+        
+        with col3:
+            # Calculate Sharpe ratio (assuming 0% risk-free rate)
+            # Calculate daily returns from cumulative returns
+            daily_returns = df_curve['cumulative_return'].pct_change().dropna()
+            if len(daily_returns) > 0 and daily_returns.std() > 0:
+                sharpe = daily_returns.mean() / daily_returns.std() * np.sqrt(252)
+                st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+            else:
+                st.metric("Sharpe Ratio", "N/A")
+        
+        with col4:
+            # Calculate win rate
+            if len(daily_returns) > 0:
+                win_rate = (daily_returns > 0).mean() * 100
+                st.metric("Win Rate", f"{win_rate:.1f}%")
+            else:
+                st.metric("Win Rate", "N/A")
+                
+    except Exception as e:
+        st.error(f"Error plotting equity curve: {e}")
+        st.info("Unable to display equity curve with current data format")
 
 # ─────────────────────────────────────────────
 # DISPLAY ENHANCED SIGNAL HISTORY
