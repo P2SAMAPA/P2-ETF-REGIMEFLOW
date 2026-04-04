@@ -33,14 +33,20 @@ equity_curve = run_backtest(df, EQ_ETFS, dist_eq)
 output = {
     "date": datetime.utcnow().strftime("%Y-%m-%d"),
     "next_trading_day": get_next_trading_day(),
+
     "FI": {
         "pick": pick_fi,
         "scores": scores_fi
     },
+
     "EQ": {
         "pick": pick_eq,
         "scores": scores_eq
     },
+
+    # 🔥 ADD THIS LINE HERE
+    "samples_fi": {k: v.tolist() for k, v in samples_fi.items()},
+
     "equity_curve": equity_curve
 }
 
