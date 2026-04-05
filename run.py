@@ -44,8 +44,8 @@ output = {
         "scores": scores_eq
     },
 
-    # 🔥 ADD THIS LINE HERE
     "samples_fi": {k: v.tolist() for k, v in samples_fi.items()},
+    "samples_eq": {k: v.tolist() for k, v in samples_eq.items()},
 
     "equity_curve": equity_curve
 }
