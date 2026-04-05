@@ -9,11 +9,11 @@ def score_etfs(dist, regime, etfs):
 
         if len(vals) < 10:
             scores[etf] = -999
-            samples_all[etf] = np.array([0])
+            # Generate synthetic samples for edge case - use a small range around 0
+            samples_all[etf] = np.random.uniform(-0.05, 0.05, size=100)
             continue
 
         samples = np.random.choice(vals, size=100, replace=True)
-
         mu = samples.mean()
         p_up = (samples > 0).mean()
 
