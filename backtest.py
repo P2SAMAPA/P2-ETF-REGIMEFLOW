@@ -14,6 +14,11 @@ def run_backtest(df, etfs, dist):
         pick = max(scores, key=scores.get)
         ret = df.iloc[i+1][pick]
 
-        equity.append(equity[-1]*(1+ret))
+        # Handle potential overflow - cap at a reasonable maximum
+        new_equity = equity[-1] * (1 + ret)
+        if np.isnan(new_equity) or np.isinf(new_equity) or new_equity > 1e10:
+            new_equity = equity[-1]  # Keep previous value if overflow occurs
+
+        equity.append(new_equity)
 
     return equity[-250:]
