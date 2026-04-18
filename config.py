@@ -9,7 +9,7 @@ HF_TOKEN = os.environ.get("HF_TOKEN")
 
 # Universes
 FI_ETFS = ["TLT", "VCIT", "LQD", "HYG", "VNQ", "GLD", "SLV"]
-EQ_ETFS = ["QQQ", "IWM", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME"]
+EQ_ETFS = ["QQQ", "IWM", "IWF", "XBI", "XSD", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME"]
 COMBINED_ETFS = FI_ETFS + EQ_ETFS
 
 # Benchmark for each universe
