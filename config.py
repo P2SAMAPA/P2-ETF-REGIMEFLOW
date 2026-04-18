@@ -1,14 +1,15 @@
 """
 Configuration for RegimeFlow ETF Engine.
 """
+import os
 
 # Hugging Face dataset
-HF_DATASET = "P2SAMAPA/p2-etf-regimeflow-results"
-HF_TOKEN = None  # set via environment variable or secrets
+HF_OUTPUT_DATASET = "P2SAMAPA/p2-etf-regimeflow-results"
+HF_TOKEN = os.environ.get("HF_TOKEN")
 
 # Universes
 FI_ETFS = ["TLT", "VCIT", "LQD", "HYG", "VNQ", "GLD", "SLV"]
-EQ_ETFS = ["QQQ", "IWM", "IWF", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME", "XBI", "XSD"]
+EQ_ETFS = ["QQQ", "IWM", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME"]
 COMBINED_ETFS = FI_ETFS + EQ_ETFS
 
 # Benchmark for each universe
@@ -25,10 +26,10 @@ RANDOM_STATE = 42
 # Walk‑forward backtest
 TRAIN_SIZE = 1000
 TEST_SIZE = 1
-CASH_THRESHOLD = 0.01  # 1% expected return threshold to go CASH
+CASH_THRESHOLD = 0.01
 
 # Transaction cost
-TRANSACTION_COST = 0.0012  # 12 bps
+TRANSACTION_COST = 0.0012
 
 # Bootstrap parameters
 N_BOOTSTRAP = 100
