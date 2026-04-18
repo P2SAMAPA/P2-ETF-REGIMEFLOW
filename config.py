@@ -8,7 +8,7 @@ HF_TOKEN = None  # set via environment variable or secrets
 
 # Universes
 FI_ETFS = ["TLT", "VCIT", "LQD", "HYG", "VNQ", "GLD", "SLV"]
-EQ_ETFS = ["QQQ", "IWM", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME", "XBI", "XSD", "IWF"]
+EQ_ETFS = ["QQQ", "IWM", "IWF", "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "GDX", "XME", "XBI", "XSD"]
 COMBINED_ETFS = FI_ETFS + EQ_ETFS
 
 # Benchmark for each universe
