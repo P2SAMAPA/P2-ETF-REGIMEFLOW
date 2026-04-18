@@ -12,7 +12,7 @@ FI_BENCHMARK = "AGG"
 # ── Equity ─────────────────────────────────────────────
 EQ_ETFS = [
     "QQQ", "XLK", "XLF", "XLE",
-    "XLV", "XLI", "XLY", "XLP", "XLU",
+    "XLV", "XLI", "XLY", "XLP", "XLU", "IWF", "XSD", "XBI"
     "GDX", "XME", "IWM"
 ]
 EQ_BENCHMARK = "SPY"
