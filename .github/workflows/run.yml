@@ -2,7 +2,7 @@ name: Run RegimeFlow Engine
 
 on:
   schedule:
-    - cron: "30 23 * * 1-5"   # 23:30 UTC weekdays
+    - cron: "30 01 * * 1-5"   # 23:30 UTC weekdays
   workflow_dispatch:
 
 jobs:
