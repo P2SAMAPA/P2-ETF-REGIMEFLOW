@@ -1,14 +1,20 @@
 import numpy as np
+import pandas as pd  # Fixed missing import
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 from config import MACRO_VARS, N_REGIMES
 
 
-def compute_regimes(df):
+def compute_regimes(df, lookback_window=504):
     """
-    Compute market regimes using KMeans clustering on macro variables.
+    Compute market regimes using Rolling, Scaled KMeans clustering on macro variables.
     
-    Dynamically filters out macro vars that are entirely null to prevent
-    KMeans from receiving an empty array.
+    v2.0 Fixes:
+    1. StandardScaler: Prevents high-magnitude variables (like yields) from drowning out 
+       low-magnitude variables (like VIX), which was causing the model to freeze.
+    2. Rolling Window: Trains only on the most recent `lookback_window` days. This allows 
+       the cluster centroids to adapt to the *current* macro regime, rather than being 
+       permanently anchored to 2018 data.
     """
     # Filter to macro vars that exist and have data
     valid_macro_vars = [
@@ -37,21 +43,40 @@ def compute_regimes(df):
             f"Insufficient data: {len(df_valid)} rows, need at least {N_REGIMES}"
         )
 
-    X = df_valid[valid_macro_vars].values
-    kmeans = KMeans(n_clusters=N_REGIMES, random_state=42, n_init=10)
-    regimes = kmeans.fit_predict(X)
+    # -----------------------------------------------------------------
+    # CRITICAL FIX 1: Rolling Window
+    # -----------------------------------------------------------------
+    # If we train on 20 years of data, centroids are anchored to the past.
+    # We only train on the recent window so centroids can shift with current regimes.
+    if len(df_valid) > lookback_window:
+        df_model = df_valid.iloc[-lookback_window:]
+    else:
+        df_model = df_valid
 
-    df_valid["regime"] = regimes
+    X = df_model[valid_macro_vars].values
+
+    # -----------------------------------------------------------------
+    # CRITICAL FIX 2: Feature Scaling
+    # -----------------------------------------------------------------
+    # Standardize to mean=0, variance=1 so VIX and Yields have equal voting power.
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    kmeans = KMeans(n_clusters=N_REGIMES, random_state=42, n_init=10)
+    regimes = kmeans.fit_predict(X_scaled)
+
+    df_model["regime"] = regimes
 
     # Assign regimes back to original dataframe
     df["regime"] = np.nan
-    df.loc[valid_mask, "regime"] = df_valid["regime"].values
+    df.loc[df_model.index, "regime"] = df_model["regime"].values
 
-    # Fill missing regimes with the most common regime
+    # Fill missing regimes with the most common regime from the recent window
     if df["regime"].isna().any():
         most_common_regime = int(pd.Series(regimes).mode()[0])
         df["regime"] = df["regime"].fillna(most_common_regime)
 
     df["regime"] = df["regime"].astype(int)
 
+    # Return signature remains identical for backward compatibility
     return df, kmeans
