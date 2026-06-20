@@ -21,6 +21,7 @@ MACRO_VARS = ["VIX", "DXY", "T10Y2Y", "TBILL_3M", "IG_SPREAD", "HY_SPREAD"]
 
 # Regime clustering
 N_REGIMES = 4
+REGIME_LOOKBACK_WINDOW = 504  # <--- ADDED: Rolling window for KMeans to prevent anchoring
 RANDOM_STATE = 42
 
 # Walk‑forward backtest
