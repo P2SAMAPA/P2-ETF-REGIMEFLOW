@@ -1,20 +1,20 @@
 import numpy as np
-import pandas as pd  # Fixed missing import
+import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from config import MACRO_VARS, N_REGIMES
+from config import MACRO_VARS, N_REGIMES, REGIME_LOOKBACK_WINDOW
 
 
-def compute_regimes(df, lookback_window=504):
+def compute_regimes(df):
     """
     Compute market regimes using Rolling, Scaled KMeans clustering on macro variables.
     
     v2.0 Fixes:
     1. StandardScaler: Prevents high-magnitude variables (like yields) from drowning out 
        low-magnitude variables (like VIX), which was causing the model to freeze.
-    2. Rolling Window: Trains only on the most recent `lookback_window` days. This allows 
+    2. Rolling Window: Trains only on the most recent REGIME_LOOKBACK_WINDOW days. This allows 
        the cluster centroids to adapt to the *current* macro regime, rather than being 
-       permanently anchored to 2018 data.
+       permanently anchored to ancient data.
     """
     # Filter to macro vars that exist and have data
     valid_macro_vars = [
@@ -48,8 +48,8 @@ def compute_regimes(df, lookback_window=504):
     # -----------------------------------------------------------------
     # If we train on 20 years of data, centroids are anchored to the past.
     # We only train on the recent window so centroids can shift with current regimes.
-    if len(df_valid) > lookback_window:
-        df_model = df_valid.iloc[-lookback_window:]
+    if len(df_valid) > REGIME_LOOKBACK_WINDOW:
+        df_model = df_valid.iloc[-REGIME_LOOKBACK_WINDOW:]
     else:
         df_model = df_valid
 
